@@ -4,12 +4,10 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
-import android.widget.Toast
-import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
+import androidx.core.content.withStyledAttributes
 import kotlin.properties.Delegates
 
 class LoadingButton @JvmOverloads constructor(
@@ -22,6 +20,11 @@ class LoadingButton @JvmOverloads constructor(
     private var loadingWidth = 0f
     private var loadingAngle = 0f
 
+    private var buttonPrimaryColor: Int = 0
+    private var buttonSecondaryColor: Int = 0
+    private var buttonTextColor: Int = 0
+    private var animationDuration: Int = 3000
+
     private var valueAnimator = ValueAnimator()
     private var circleAnimator = ValueAnimator()
 
@@ -30,20 +33,18 @@ class LoadingButton @JvmOverloads constructor(
             ButtonState.Loading -> {
                 buttonText = "We are loading"
                 valueAnimator = ValueAnimator.ofFloat(0f, widthSize.toFloat()).apply {
-                    duration = 3000
+                    duration = animationDuration.toLong()
                     repeatMode = ValueAnimator.REVERSE
 
                     addUpdateListener {
                         loadingWidth = animatedValue as Float
                         this@LoadingButton.invalidate()
                     }
-
-
                     start()
                 }
 
                 circleAnimator = ValueAnimator.ofFloat(0f, 360f).apply {
-                    duration = 3000
+                    duration = animationDuration.toLong()
                     repeatMode = ValueAnimator.REVERSE
 
                     addUpdateListener {
@@ -55,10 +56,7 @@ class LoadingButton @JvmOverloads constructor(
                     }
                     start()
                 }
-
-
-
-                }
+            }
             ButtonState.Completed -> {
                 buttonText = "Download"
                 loadingWidth = 0f
@@ -70,37 +68,51 @@ class LoadingButton @JvmOverloads constructor(
             else -> {
                 buttonState = ButtonState.Completed
             }
-
         }
-
     }
-
 
     init {
         isClickable = true
 
         buttonState = ButtonState.Clicked
+
+        context.withStyledAttributes(attrs, R.styleable.LoadingButton) {
+            buttonPrimaryColor = getColor(R.styleable.LoadingButton_buttonPrimaryColor, 0)
+            buttonSecondaryColor = getColor(R.styleable.LoadingButton_buttonSecondaryColor, 0)
+            buttonTextColor = getColor(R.styleable.LoadingButton_buttonTextColor, 0)
+            animationDuration = getInt(R.styleable.LoadingButton_animationDuration, 0)
+        }
+
+
     }
-
-
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        paint.color = ContextCompat.getColor(context, R.color.colorPrimary)
-        canvas?.drawRect(0f,0f,widthSize.toFloat(),heightSize.toFloat(),paint)
-        paint.color = ContextCompat.getColor(context, R.color.colorPrimaryDark)
-        canvas?.drawRect(0f,0f,loadingWidth,heightSize.toFloat(),paint)
+        paint.color = buttonPrimaryColor
+        canvas?.drawRect(0f, 0f, widthSize.toFloat(), heightSize.toFloat(), paint)
+        paint.color = buttonSecondaryColor
+        canvas?.drawRect(0f, 0f, loadingWidth, heightSize.toFloat(), paint)
 
 
-        paint.color = ContextCompat.getColor(context, R.color.white)
+        paint.color = buttonTextColor
         paint.textSize = resources.getDimension(R.dimen.default_text_size)
         paint.textAlign = Paint.Align.CENTER
-        canvas?.drawText(buttonText, (0.5*widthSize).toFloat(),
-            (0.6*heightSize).toFloat(),paint)
+        canvas?.drawText(
+            buttonText, (0.5 * widthSize).toFloat(),
+            (0.6 * heightSize).toFloat(), paint
+        )
 
         paint.color = ContextCompat.getColor(context, R.color.colorAccent)
-        canvas?.drawArc((0.70*widthSize).toFloat(),(0.275*heightSize).toFloat(),(0.70*widthSize).toFloat() + 70f ,(0.275*heightSize).toFloat() + 70f ,0f,loadingAngle,true,paint)
-
+        canvas?.drawArc(
+            (0.70 * widthSize).toFloat(),
+            (0.275 * heightSize).toFloat(),
+            (0.70 * widthSize).toFloat() + 70f,
+            (0.275 * heightSize).toFloat() + 70f,
+            0f,
+            loadingAngle,
+            true,
+            paint
+        )
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
